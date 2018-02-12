@@ -1,7 +1,7 @@
 from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
 from aiohttp import web
 
-from core.app import create_app
+from app.app import create_app
 
 class MyAppTestCase(AioHTTPTestCase):
 

@@ -18,7 +18,7 @@ VERIABLES = ['VERSION']
 #     ap = argparse.ArgumentParser()
 #     import ipdb; ipdb.set_trace()
 
-#     commandline.standard_argparse_options(ap, default_config='./config/core.yaml')
+#     commandline.standard_argparse_options(ap, default_config='./config/app.yaml')
 #     options = ap.parse_args()
 #     config = commandline.config_from_options(options, TRAFARET)
 #     app['config'] = config
@@ -34,7 +34,7 @@ def get_config():
     log = logging.getLogger()
     config = {}
     try:
-        config = load_config(os.path.join(os.path.dirname(os.path.realpath(__file__)), './../config/core.yaml'))
+        config = load_config(os.path.join(os.path.dirname(os.path.realpath(__file__)), './../config/app.yaml'))
     except FileNotFoundError:
         pass
     except yaml.YAMLError:

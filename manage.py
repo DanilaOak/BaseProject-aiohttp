@@ -8,8 +8,8 @@ from aio_manager.commands.runserver import RunServer as BaseRunServer
 import pytest
 import uvloop
 
-from core import create_app
-from core.utils import create_database, get_config, drop_database, migrate
+from app import create_app
+from app.utils import create_database, get_config, drop_database, migrate
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -41,7 +41,7 @@ class RunServer(BaseRunServer):
     def run(self, app, args):
         logging.basicConfig(level=args.level)
         logging.getLogger().setLevel(args.level)
-        web.run_app(app, host=args.hostname, port=args.port, access_log=None, )
+        web.run_app(app, host=args.hostname, port=args.port, access_log=None)
 
 
 manager.add_command(RunServer(app))
