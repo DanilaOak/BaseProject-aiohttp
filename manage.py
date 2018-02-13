@@ -19,7 +19,7 @@ config = get_config()
 
 class RunTests(Command):
     def run(self, app, args):
-        loop = asyncio.get_event_loop()
+        # loop = asyncio.get_event_loop()
         # test_config = get_test_config()
         # loop.run_until_complete(create_database(test_config))
         run_command = './tests'

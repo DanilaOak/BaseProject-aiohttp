@@ -7,3 +7,6 @@ uvloop
 alembic
 asyncpg
 asyncpgsa
+marshmallow
+webargs
+psycopg2

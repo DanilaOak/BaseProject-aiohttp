@@ -55,15 +55,15 @@ class BaseStrictSchema(Schema):
 
 
 class UserSchema(BaseStrictSchema):
-    id = fields.String(dump_only=True)
-    login = fields.Integer(required=True)
+    id = fields.Integer(dump_only=True)
+    login = fields.String(required=True)
     password = fields.String(required=True)
     first_name = fields.String(required=False)
     last_name = fields.String(required=False)
     email = fields.Email(required=False)
 
     class Meta:
-        exclude = ("password", "secret_attribute")
+        # exclude = ("password", "secret_attribute")
         strict = True
 
 

@@ -2,9 +2,11 @@ import argparse
 import os
 import yaml
 import logging
+import json
 
-from trafaret_config import commandline
-import trafaret
+# from trafaret_config import commandline
+# import trafaret
+import asyncpg
 from asyncpgsa import pg, PG
 from sqlalchemy.engine.default import StrCompileDialect
 import alembic.config as alembic_config
