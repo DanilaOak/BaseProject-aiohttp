@@ -1,0 +1,9 @@
+aiohttp
+aiohttp-swagger
+sqlalchemy
+aio_manager
+pytest-aiohttp
+uvloop
+alembic
+asyncpg
+asyncpgsa
