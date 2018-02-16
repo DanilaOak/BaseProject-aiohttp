@@ -8,6 +8,7 @@ import uvloop
 
 from .routes import setup_routes
 from .utils import get_config, connect_to_db
+from .middlewares import error_middleware
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -17,7 +18,7 @@ def create_app(config=None):
     
     cpu_count = multiprocessing.cpu_count()
     loop = asyncio.get_event_loop()
-    app = web.Application(loop=loop, debug=True)
+    app = web.Application(loop=loop, middlewares=[error_middleware])
     app['executor'] = ProcessPoolExecutor(cpu_count)
     app['config'] = config
     app.on_startup.append(init_database)
