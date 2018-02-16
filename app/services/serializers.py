@@ -66,6 +66,15 @@ class UserSchema(BaseStrictSchema):
         # exclude = ("password", "secret_attribute")
         strict = True
 
+class AuthSchema(BaseStrictSchema):
+    login = fields.String(required=True)
+    password = fields.String(required=True)
+
+    class Meta:
+        # exclude = ("password", "secret_attribute")
+        strict = True
+
+
 
 class SchemaNotFound(Exception):
     pass
@@ -77,4 +86,5 @@ class InvalidParameterException(Exception):
 
 schemas = {
     'user_schema': UserSchema,
+    'login_schema': AuthSchema,
 }
