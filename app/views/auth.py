@@ -37,3 +37,9 @@ async def login(request: web.Request, body) -> web.Response:
 
     raise web.HTTPUnauthorized(
         body=json.dumps({'error': 'Wrong password'}), content_type='application/json')
+
+
+async def logout(request: web.Request) -> web.Response:
+    response = web.json_response({'status': 'Ok'})
+    response.del_cookie(name='AppCoockie')
+    return response

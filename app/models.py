@@ -26,3 +26,12 @@ _models = {
 
 def get_model_by_name(name: str) -> sa.Table:
     return _models.get(name, None)
+
+def row_to_dict(table: sa.Table, row: dict) -> dict:
+    fields = table.columns.keys()
+    data = {}
+    for field in fields:
+        if field == 'password':
+            continue
+        data[field] = row[field]
+    return data

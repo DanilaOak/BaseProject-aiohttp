@@ -3,8 +3,8 @@ import json
 from aiohttp import web
 from sqlalchemy import literal_column, select, exists
 
-from app.models import get_model_by_name
-from app.services.serializers import serialize_body
+from app.models import get_model_by_name, row_to_dict
+from app.services.serializers import serialize_body, id_validator
 
 
 @serialize_body('user_schema')
@@ -20,4 +20,57 @@ async def create_user(request: web.Request, body) -> web.Response:
     body['id'] = data['id']
     del body['password']
 
-    return web.Response(status=201, content_type='application/json', body=json.dumps(body))
+    return web.Response(
+        status=201, content_type='application/json', body=json.dumps(body))
+
+async def get_all_users(request: web.Request) -> web.Response:
+    user_table = get_model_by_name('user')
+    users = await request.app['pg'].fetch(user_table.select())
+    result = [row_to_dict(user_table, user) for user in users]
+
+    return web.Response(status=200, content_type='appication/json',
+                        body=json.dumps(result))
+
+
+async def get_user(request: web.Request) -> web.Response:
+    user_id = id_validator(request.match_info['user_id'], 'user')
+    user_table = get_model_by_name('user')
+    user_exists = await request.app['pg'].fetchval(select([exists().where(user_table.c.id == user_id)]))
+
+    if not user_exists:
+        raise web.HTTPNotFound(
+            body=json.dumps({'error': f'User with id={user_id} not found'}),
+            content_type='application/json')
+
+    user = await request.app['pg'].fetchrow(
+        user_table.select().where(user_table.c.id == user_id))
+    
+    return web.Response(status=200, content_type='application/json',
+                        body=json.dumps(row_to_dict(user_table, user)))
+
+@serialize_body('patch_user_schema')
+async def patch_user(request: web.Request, body) -> web.Response:
+    user_id = id_validator(request.match_info['user_id'], 'user')
+    user_table = get_model_by_name('user')
+    user_exists = await request.app['pg'].fetchval(select([exists().where(user_table.c.id == user_id)]))
+
+    if not user_exists:
+        raise web.HTTPNotFound(
+            body=json.dumps({'error': f'User with id={user_id} not found'}),
+            content_type='application/json')
+    
+    if request.auth_user['user_id'] != user_id:
+        raise web.HTTPUnauthorized(body=json.dumps({'error': 'Access denied for requested resource'}),
+                                   content_type='application/json')
+    
+    if not body:
+        return web.Response(status=200, content_type='application/json',
+                            body=json.dumps({}))
+
+    user = await request.app['pg'].fetchrow(user_table.update().where(
+        user_table.c.id == user_id).values(**body).returning(literal_column('*')))
+    
+    result = row_to_dict(user_table, user)
+
+    return web.Response(status=200, content_type='application/json',
+                        body=json.dumps(result))

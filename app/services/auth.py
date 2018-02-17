@@ -1,5 +1,6 @@
 PUBLIC_RESOURCES = (
     ('/api/v1/auth/login', ('POST',)),
+    ('/api/v1/user', ('POST',)),
     ('/api/version', ('GET',)),
     ('/api/v1/doc', ('GET',)),
 )

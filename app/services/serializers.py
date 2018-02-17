@@ -1,10 +1,22 @@
 from functools import wraps
+import re
+import json
 
 from aiohttp import web
 from webargs.aiohttpparser import parser
 from marshmallow import fields, validates_schema, Schema, ValidationError
 from marshmallow.compat import iteritems
 
+
+def id_validator(request_id, model_name):
+    valid_id = re.match('^[0-9]+$', request_id)
+    if valid_id is None:
+        raise web.HTTPNotFound(
+            body=json.dumps({'error': f'{model_name.capitalize()} with id={request_id} not found'}),
+            content_type='application/json'
+        )
+
+    return int(valid_id.string)
 
 
 def serialize_body(schema_name, custom_exc=None):
@@ -63,17 +75,24 @@ class UserSchema(BaseStrictSchema):
     email = fields.Email(required=False)
 
     class Meta:
-        # exclude = ("password", "secret_attribute")
         strict = True
+
 
 class AuthSchema(BaseStrictSchema):
     login = fields.String(required=True)
     password = fields.String(required=True)
 
     class Meta:
-        # exclude = ("password", "secret_attribute")
         strict = True
 
+
+class PatchUserSchema(BaseStrictSchema):
+    first_name = fields.String(required=False)
+    last_name = fields.String(required=False)
+    email = fields.Email(required=False)
+
+    class Meta:
+        strict = True
 
 
 class SchemaNotFound(Exception):
@@ -87,4 +106,5 @@ class InvalidParameterException(Exception):
 schemas = {
     'user_schema': UserSchema,
     'login_schema': AuthSchema,
+    'patch_user_schema': PatchUserSchema,
 }
