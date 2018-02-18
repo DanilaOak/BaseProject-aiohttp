@@ -18,9 +18,17 @@ User = sa.Table(
     sa.Column('email', sa.String, nullable=True)
 )
 
+Permission = sa.Table(
+    'permission', meta,
+    sa.Column('id', sa.Integer, primary_key=True),
+    sa.Column('user_id', sa.Integer, sa.ForeignKey('user.id', ondelete="CASCADE"), nullable=False),
+    sa.Column('perm_name', sa.String, nullable=False)
+)
+
 _models = {
     'system_settings': SystemSettings,
     'user': User,
+    'permission': Permission,
 }
 
 

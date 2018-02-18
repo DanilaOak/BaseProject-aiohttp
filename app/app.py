@@ -5,6 +5,10 @@ from concurrent.futures import ProcessPoolExecutor
 from aiohttp import web
 from aiohttp_swagger import *
 import uvloop
+import aiohttp_debugtoolbar
+from aiohttp_debugtoolbar import toolbar_middleware_factory
+from aiohttp_security import setup as setup_security
+from aiohttp_security import SessionIdentityPolicy
 
 from .routes import setup_routes
 from .utils import get_config, connect_to_db
@@ -18,7 +22,8 @@ def create_app(config=None):
     
     cpu_count = multiprocessing.cpu_count()
     loop = asyncio.get_event_loop()
-    app = web.Application(loop=loop, middlewares=[error_middleware, auth_middleware])
+    app = web.Application(loop=loop, middlewares=[toolbar_middleware_factory, error_middleware, auth_middleware])
+    aiohttp_debugtoolbar.setup(app)
     app['executor'] = ProcessPoolExecutor(cpu_count)
     app['config'] = config
     app.on_startup.append(init_database)

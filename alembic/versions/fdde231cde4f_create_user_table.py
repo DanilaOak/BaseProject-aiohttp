@@ -27,6 +27,14 @@ def upgrade():
         sa.Column('email', sa.String, nullable=True)
     )
 
+    op.create_table(
+        'permission',
+        sa.Column('id', sa.Integer, primary_key=True),
+        sa.Column('user_id', sa.Integer, sa.ForeignKey('user.id', ondelete="CASCADE"), nullable=False),
+        sa.Column('name', sa.String, nullable=False)
+    )
+
 
 def downgrade():
     op.drop_table('user')
+    op.drop_table('pernission')
