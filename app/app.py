@@ -17,6 +17,7 @@ from .middlewares import error_middleware, auth_middleware
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 def create_app(config=None):
+    
     if not config:
         config = get_config()
     

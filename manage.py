@@ -9,7 +9,7 @@ import pytest
 import uvloop
 
 from app import create_app
-from app.utils import create_database, get_config, drop_database, migrate
+from app.utils import create_database, get_config, drop_database, migrate, get_test_config
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -19,9 +19,9 @@ config = get_config()
 
 class RunTests(Command):
     def run(self, app, args):
-        # loop = asyncio.get_event_loop()
-        # test_config = get_test_config()
-        # loop.run_until_complete(create_database(test_config))
+        loop = asyncio.get_event_loop()
+        test_config = get_test_config()
+        loop.run_until_complete(create_database(test_config))
         run_command = './tests'
 
         if args.test_file:
@@ -29,7 +29,7 @@ class RunTests(Command):
 
         pytest.main(['-x', '-s', run_command])
 
-        # loop.run_until_complete(drop_database(test_config))
+        loop.run_until_complete(drop_database(test_config))
     def configure_parser(self, parser):
         super().configure_parser(parser)
         parser.add_argument('--test-file')

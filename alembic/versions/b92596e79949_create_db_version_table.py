@@ -37,7 +37,7 @@ def upgrade():
     
     op.bulk_insert(system_settings,
         [{'name': 'db_version', 'value': revision}])
-
+    
 
 def downgrade():
     op.drop_table('system_settings')
