@@ -8,7 +8,7 @@ from aiohttp_security import (
 from app.models import get_model_by_name
 
 
-@swagger_path("swagger/api_version.yaml")
+@swagger_path('swagger/api_version.yaml')
 async def get_version(request: web.Request):
     
     username = await authorized_userid(request)

@@ -47,22 +47,23 @@ class DBAuthorizationPolicy(AbstractAuthorizationPolicy):
             return False
 
 
-async def check_credentials(db_engine, username, password):
-    async with db_engine as conn:
-        where = (User.c.login == username)
-        query = User.select().where(where)
-        ret = await conn.execute(query)
-        user = await ret.fetchone()
-        if user is not None:
-            hash = user[2]
-            return sha256_crypt.verify(password, hash)
-    return False
+# async def check_credentials(db_engine, username, password):
+#     async with db_engine as conn:
+#         where = (User.c.login == username)
+#         query = User.select().where(where)
+#         ret = await conn.execute(query)
+#         user = await ret.fetchone()
+#         if user is not None:
+#             hash = user[2]
+#             return sha256_crypt.verify(password, hash)
+#     return False
 
 PUBLIC_RESOURCES = (
     ('/api/v1/auth/login', ('POST',)),
     ('/api/v1/user', ('POST',)),
     ('/api/version', ('GET',)),
     ('/api/v1/doc', ('GET',)),
+    ('/_debugtoolbar', ('GET',)),
 )
 
 

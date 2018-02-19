@@ -2,11 +2,12 @@ import json
 
 from aiohttp import web
 from sqlalchemy import literal_column, select, exists
+from aiohttp_swagger import *
 
 from app.models import get_model_by_name, row_to_dict
 from app.services.serializers import serialize_body, id_validator
 
-
+@swagger_path('swagger/create_user.yaml')
 @serialize_body('user_schema')
 async def create_user(request: web.Request, body) -> web.Response:
     user_table = get_model_by_name('user')
@@ -23,6 +24,7 @@ async def create_user(request: web.Request, body) -> web.Response:
     return web.Response(
         status=201, content_type='application/json', body=json.dumps(body))
 
+@swagger_path('swagger/get_all_users.yaml')
 async def get_all_users(request: web.Request) -> web.Response:
     user_table = get_model_by_name('user')
     users = await request.app['pg'].fetch(user_table.select())
@@ -32,6 +34,7 @@ async def get_all_users(request: web.Request) -> web.Response:
                         body=json.dumps(result))
 
 
+@swagger_path('swagger/get_user.yaml')
 async def get_user(request: web.Request) -> web.Response:
     user_id = id_validator(request.match_info['user_id'], 'user')
     user_table = get_model_by_name('user')
@@ -48,6 +51,7 @@ async def get_user(request: web.Request) -> web.Response:
     return web.Response(status=200, content_type='application/json',
                         body=json.dumps(row_to_dict(user_table, user)))
 
+@swagger_path('swagger/patch_user.yaml')
 @serialize_body('patch_user_schema')
 async def patch_user(request: web.Request, body) -> web.Response:
     user_id = id_validator(request.match_info['user_id'], 'user')

@@ -3,10 +3,12 @@ from datetime import datetime, timedelta
 
 from aiohttp import web
 import jwt
+from aiohttp_swagger import *
 
 from app.models import get_model_by_name
 from app.services.serializers import serialize_body
 
+@swagger_path('swagger/login.yaml')
 @serialize_body('login_schema', custom_exc=web.HTTPUnauthorized)
 async def login(request: web.Request, body) -> web.Response:
     user_table = get_model_by_name('user')
@@ -14,7 +16,7 @@ async def login(request: web.Request, body) -> web.Response:
     user = await request.app['pg'].fetchrow(user_table.select().where(user_table.c.login == body['login']))
 
     if not user:
-        raise web.HTTPUnauthorized(body=json.dumps({'error': 'User with login: "{}" not found'.format(body['login'])}),
+        raise web.HTTPUnauthorized(body=json.dumps({'error': 'Invalid username / password combination'}),
                                    content_type='application/json')
 
     if body['password'] == user['password']:
@@ -36,9 +38,9 @@ async def login(request: web.Request, body) -> web.Response:
         return response
 
     raise web.HTTPUnauthorized(
-        body=json.dumps({'error': 'Wrong password'}), content_type='application/json')
+        body=json.dumps({'error': 'Invalid username / password combination'}), content_type='application/json')
 
-
+@swagger_path('swagger/logout.yaml')
 async def logout(request: web.Request) -> web.Response:
     response = web.json_response({'status': 'Ok'})
     response.del_cookie(name='AppCoockie')
