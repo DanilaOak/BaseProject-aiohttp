@@ -1,6 +1,6 @@
 import json
 
-from aiohttp import web
+from aiohttp import web, ClientSession
 from sqlalchemy import literal_column, select, exists
 from aiohttp_swagger import *
 
@@ -18,7 +18,8 @@ async def create_user(request: web.Request, body) -> web.Response:
         return web.HTTPConflict(body=json.dumps({'error': f'User with login "{login}" already exist'}), content_type='application/json')
 
     data = await request.app['pg'].fetchrow(user_table.insert().values(**body).returning(literal_column('*')))
-    body['id'] = data['id']
+    print(data)
+    body['user_id'] = data['user_id']
     del body['password']
 
     return web.Response(
@@ -78,3 +79,8 @@ async def patch_user(request: web.Request, body) -> web.Response:
 
     return web.Response(status=200, content_type='application/json',
                         body=json.dumps(result))
+
+
+
+
+

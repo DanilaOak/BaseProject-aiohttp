@@ -1,6 +1,9 @@
 import sqlalchemy as sa
+from datetime import datetime, timedelta
 
 from aiohttp_security.abc import AbstractAuthorizationPolicy
+from aiohttp import web
+import jwt
 # from passlib.hash import sha256_crypt
 from app.models import User, Permission
 
@@ -60,6 +63,8 @@ class DBAuthorizationPolicy(AbstractAuthorizationPolicy):
 
 PUBLIC_RESOURCES = (
     ('/api/v1/auth/login', ('POST',)),
+    ('/api/v1/restorepassword', ('POST',)),
+    ('/api/v1/restorepassword/', ('GET',)),
     ('/api/v1/user', ('POST',)),
     ('/api/version', ('GET',)),
     ('/api/v1/doc', ('GET',)),
@@ -72,3 +77,21 @@ def check_public_resources(path: str, method: str) -> bool:
         if resource in path and method in allowed_methods:
             return True
     return False
+
+async def set_authorization_coockie(user: dict, timedelta_data: dict, secret_key: str):
+    response = web.json_response(data={'user_id': user['user_id']}, status=200)
+    max_age = timedelta(**timedelta_data)
+    expiration_time = datetime.utcnow() + max_age
+    token = jwt.encode(payload={'login': user['login'],
+                                'user_id': user['user_id'],
+                                'exp': expiration_time},
+                       key=secret_key)
+    response.set_cookie(name='AppCoockie',
+                        value=token.decode(),
+                        httponly=True,
+                        secure=False,
+                        path='/',
+                        max_age=int(max_age.total_seconds()),
+                        # expires=expiration_time.isoformat(), 
+    )
+    return response

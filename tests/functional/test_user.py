@@ -5,7 +5,7 @@ from app.models import User
 
 
 user_create_data = {'login': 'test_user', 'password': 'test'}
-user_check_data = {'login': 'test_user', 'id': 1, 'first_name': None, 'last_name': None, 'email': None}
+user_check_data = {'login': 'test_user', 'user_id': 1, 'first_name': None, 'last_name': None, 'email': None}
 AUTH_ERROR = {'error': 'Access denied for requested resource'}
 
 class TestUserView(TestCase):
@@ -25,7 +25,7 @@ class TestUserView(TestCase):
         
         body = await response_create.json()
         self.assertEqual(response_create.status, 201)
-        self.assertEqual(body, {'id': 1,
+        self.assertEqual(body, {'user_id': 1,
                                 'login': 'test_user'})
 
     @unittest_run_loop

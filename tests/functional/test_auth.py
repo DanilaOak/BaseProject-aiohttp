@@ -17,7 +17,7 @@ class TestAuthView(TestCase):
         await self.create_user()
         user_id = 1
         response_login = await self.client.session.request('POST', self.client.make_url('/api/v1/auth/login'),
-                                                    json=user_create_data)
+                                                           json=user_create_data)
         self.assertEqual(response_login.status, 200)
         body = await response_login.json()
         self.assertEqual(body, {'user_id': user_id})
@@ -25,7 +25,6 @@ class TestAuthView(TestCase):
     @unittest_run_loop
     async def test_login_wrong_data(self):
         await self.create_user()
-        user_id = 1
         response_login = await self.client.session.request('POST', self.client.make_url('/api/v1/auth/login'),
                                                                                         json={'login': 'wrong', 'password': 'super_wrong'})
         self.assertEqual(response_login.status, 401)
