@@ -3,14 +3,14 @@ from datetime import datetime, timedelta
 
 from aiohttp import web
 import jwt
-from jwt.exceptions import ExpiredSignatureError, DecodeError
+from jwt.exceptions import ExpiredSignatureError, DecodeError, InvalidAudienceError
 from aiohttp_swagger import *
-from sqlalchemy import and_
+from sqlalchemy import and_, select, exists, literal_column
 
 from app.models import get_model_by_name, row_to_dict
 from app.services.serializers import serialize_body
 from app.services.email import send_email
-from app.services.auth import set_authorization_coockie
+from app.services.auth import set_authorization_coockie, token_decode
 
 auth_routes = web.RouteTableDef()
 
@@ -54,8 +54,10 @@ async def forgot_password(request: web.Request, body) -> web.Response:
     expiration_time = datetime.utcnow() + timedelta(hours=24)
     token = jwt.encode(payload={'login': user['login'],
                                 'user_id': user['user_id'],
-                                'exp': expiration_time},
-                       key=request.app['config']['RESTORE_EMAIL_KEY']).decode('utf-8')
+                                'exp': expiration_time,
+                                'aud': 'restore_password_url'},
+                       key=request.app['config']['SECRET_KEY'],
+                       headers={'type': 'restore_password'}).decode('utf-8')
     # generate url
     url = '{scheme}://{host}/api/v1/restorepassword/{token}'.format(scheme=request.scheme,
                                                                     host=request.app['config']['HOST'],
@@ -76,14 +78,27 @@ async def forgot_password(request: web.Request, body) -> web.Response:
 @auth_routes.get('/api/v1/restorepassword/{token}')
 async def restore_password_confirmation(request: web.Request) -> web.Response:
     token = request.match_info['token']
+    user = token_decode(token, request.app['config']['RESTORE_EMAIL_KEY'], 'restore_password_url')
 
-    try:
-        user = jwt.decode(token, key=request.app['config']['RESTORE_EMAIL_KEY'])
-    except ExpiredSignatureError:
-        raise web.HTTPUnauthorized(body=json.dumps({'error': 'Token expired'}),
-                                    content_type='application/json')
-    except DecodeError:
-        raise web.HTTPUnauthorized(body=json.dumps({'error': 'Invalid token'}),
-                                    content_type='application/json')
+    return await set_authorization_coockie(user, {'minutes': 5}, request.app['config']['SECRET_KEY'], audience='restore_password_coockie')
 
-    return await set_authorization_coockie(user, {'minutes': 5}, request.app['config']['SECRET_KEY'])
+@auth_routes.post('/api/v1/restorepassword/newpassword')
+@serialize_body('reset_password')
+async def reset_password(request: web.Request, body) -> web.Response:
+    token = request.cookies.get('AppCoockie')
+    user = token_decode(token, request.app['config']['SECRET_KEY'], 'restore_password_coockie')
+    user_table = get_model_by_name('user')
+    user_exists = await request.app['pg'].fetchval(select([exists().where(user_table.c.user_id == user['user_id'])]))
+    
+    if not user_exists:
+        raise web.HTTPNotFound(
+            body=json.dumps({'error': 'User not found'}),
+            content_type='application/json')
+    
+    user = await request.app['pg'].fetchrow(user_table.update().where(
+        user_table.c.user_id == user['user_id']).values(**body).returning(literal_column('*')))
+    
+    print(user)
+    
+    return await set_authorization_coockie(user, {'hours': 24}, request.app['config']['SECRET_KEY'])
+    

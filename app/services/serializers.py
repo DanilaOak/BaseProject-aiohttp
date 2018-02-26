@@ -101,6 +101,13 @@ class ForgotPasswordSchema(BaseStrictSchema):
     class Meta:
         strict = True
 
+
+class ResetPasswordSchema(BaseStrictSchema):
+    password = fields.String(required=True)
+
+    class Meta:
+        strict = True
+
 class SchemaNotFound(Exception):
     pass
 
@@ -114,4 +121,5 @@ schemas = {
     'login_schema': AuthSchema,
     'patch_user_schema': PatchUserSchema,
     'forgot_password': ForgotPasswordSchema,
+    'reset_password': ResetPasswordSchema,
 }

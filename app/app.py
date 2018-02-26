@@ -15,6 +15,7 @@ from .utils import get_config, connect_to_db
 from .middlewares import error_middleware, auth_middleware
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+middlewares = [error_middleware, auth_middleware]
 
 def create_app(config=None):
     
@@ -23,8 +24,15 @@ def create_app(config=None):
     
     cpu_count = multiprocessing.cpu_count()
     loop = asyncio.get_event_loop()
-    app = web.Application(loop=loop, middlewares=[toolbar_middleware_factory, error_middleware, auth_middleware])
-    aiohttp_debugtoolbar.setup(app)
+
+    if config['DEBUG']:
+        middlewares.append(toolbar_middleware_factory)
+
+    app = web.Application(loop=loop, middlewares=middlewares)
+    
+    if config['DEBUG']:
+        aiohttp_debugtoolbar.setup(app)
+
     app['executor'] = ProcessPoolExecutor(cpu_count)
     app['config'] = config
     app.on_startup.append(init_database)
