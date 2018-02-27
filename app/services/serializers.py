@@ -96,7 +96,6 @@ class PatchUserSchema(BaseStrictSchema):
 
 class ForgotPasswordSchema(BaseStrictSchema):
     login = fields.String(required=True)
-    email = fields.Email(required=True)
 
     class Meta:
         strict = True

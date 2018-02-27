@@ -67,7 +67,7 @@ class DBAuthorizationPolicy(AbstractAuthorizationPolicy):
 PUBLIC_RESOURCES = (
     ('/api/v1/auth/login', ('POST',)),
     ('/api/v1/restorepassword', ('POST',)),
-    ('/api/v1/restorepassword/newpassword', ('POST',)),
+    ('/api/v1/user/password/new', ('POST',)),
     ('/api/v1/restorepassword/', ('GET',)),
     ('/api/v1/user', ('POST',)),
     ('/api/version', ('GET',)),
@@ -83,7 +83,7 @@ def check_public_resources(path: str, method: str) -> bool:
     return False
 
 async def set_authorization_coockie(user: dict, timedelta_data: dict, secret_key: str, audience=None):
-    response = web.json_response(data={'user_id': user['user_id']}, status=200)
+    response = web.json_response(data={'status': 'ok'}, status=200)
     max_age = timedelta(**timedelta_data)
     expiration_time = datetime.utcnow() + max_age
     payload = {'login': user['login'],
