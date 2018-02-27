@@ -9,7 +9,7 @@ from sqlalchemy import and_, select, exists, literal_column
 
 from app.models import get_model_by_name, row_to_dict
 from app.services.serializers import serialize_body
-from app.services.email import send_email
+from app.services.email import Email
 from app.services.auth import set_authorization_coockie, token_decode
 
 
@@ -38,7 +38,7 @@ async def login(request: web.Request, body) -> web.Response:
 @swagger_path('swagger/logout.yaml')
 @auth_routes.get('/api/v1/auth/logout')
 async def logout(request: web.Request) -> web.Response:
-    response = web.json_response({'status': 'Ok'})
+    response = web.json_response({'status': 'ok'})
     response.del_cookie(name='AppCoockie')
     return response
 
@@ -63,10 +63,11 @@ async def forgot_password(request: web.Request, body) -> web.Response:
                        key=request.app['config']['SECRET_KEY']).decode('utf-8')
     # generate url
     url = '{scheme}://{host}/api/v1/restorepassword/{token}'.format(scheme=request.scheme,
-                                                                    host=request.app['config']['HOST'],
+                                                                    host=request.app['config']['HOST'] or request.host,
                                                                     token=token)
     # sent email with url
-    email_resp = await send_email(request.scheme, request.app['config']['EMAIL_SERVICE_HOST'], data={'email_type': 'restore_password',
+    email = Email(request)
+    email_resp = await email.send(request.scheme, request.app['config']['EMAIL_SERVICE_HOST'], data={'email_type': 'restore_password',
                                                                                                      'to_name': user['login'],
                                                                                                      'to_addr': user['email'],
                                                                                                      'linc': url,
@@ -75,7 +76,7 @@ async def forgot_password(request: web.Request, body) -> web.Response:
     if not email_resp['success']:
         raise web.HTTPUnprocessableEntity(content_type='application/json', body=json.dumps({'email_service_error': email_resp['error']}))
     
-    return web.Response(status=200, content_type='application/json', body=json.dumps({'status': 'ok'}))
+    return web.Response(status=200, content_type='application/json', body=json.dumps(email_resp))
 
 
 @swagger_path('swagger/restore_password_get.yaml')
@@ -108,8 +109,6 @@ async def reset_password(request: web.Request, body) -> web.Response:
     
     user = await request.app['pg'].fetchrow(user_table.update().where(
         user_table.c.user_id == user['user_id']).values(**body).returning(literal_column('*')))
-    
-    print(user)
 
     if request.app['config']['AUTO_AUTHENTICATION']:
         return await set_authorization_coockie(user, {'hours': 24}, request.app['config']['SECRET_KEY'])

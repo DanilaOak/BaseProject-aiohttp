@@ -77,6 +77,7 @@ def get_test_config():
     config['DB_NAME'] = 'test_database'
     config['PROD'] = False
     config['HOST'] = None
+    config['TEST_ENV'] = True
     return config
 
 
