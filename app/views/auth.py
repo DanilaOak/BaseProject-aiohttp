@@ -82,7 +82,9 @@ async def forgot_password(request: web.Request, body) -> web.Response:
         raise web.HTTPUnprocessableEntity(content_type='application/json', body=json.dumps({'email_service_error': email_resp['error']}))
     '''
 
-    await request.app.rmq.produce(data, request.app['config']['RMQ_PRODUCER_QUEUE'])
+    # await request.app.rmq.produce(data, request.app['config']['RMQ_PRODUCER_QUEUE'])
+    await request.app.redis.rpush('email', json.dumps(data))
+
     return web.Response(status=200, content_type='application/json', body=json.dumps({'status': 'ok'}))
 
 
