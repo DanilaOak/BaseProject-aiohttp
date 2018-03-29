@@ -65,7 +65,12 @@ async def forgot_password(request: web.Request, body) -> web.Response:
     url = '{scheme}://{host}/api/v1/restorepassword/{token}'.format(scheme=request.scheme,
                                                                     host=request.app['config']['HOST'] or request.host,
                                                                     token=token)
-    # sent email with url
+    data = {'email_type': 'restore_password',
+            'to_name': user['login'],
+            'to_addr': user['email'],
+            'linc': url,
+            'subject': 'Restore Password'}
+    '''
     email = Email(request)
     email_resp = await email.send(request.scheme, request.app['config']['EMAIL_SERVICE_HOST'], data={'email_type': 'restore_password',
                                                                                                      'to_name': user['login'],
@@ -75,8 +80,10 @@ async def forgot_password(request: web.Request, body) -> web.Response:
 
     if not email_resp['success']:
         raise web.HTTPUnprocessableEntity(content_type='application/json', body=json.dumps({'email_service_error': email_resp['error']}))
-    
-    return web.Response(status=200, content_type='application/json', body=json.dumps(email_resp))
+    '''
+
+    await request.app.rmq.produce(data, request.app['config']['RMQ_PRODUCER_QUEUE'])
+    return web.Response(status=200, content_type='application/json', body=json.dumps({'status': 'ok'}))
 
 
 @swagger_path('swagger/restore_password_get.yaml')

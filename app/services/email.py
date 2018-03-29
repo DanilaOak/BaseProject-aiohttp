@@ -2,6 +2,7 @@ import json
 
 from aiohttp import ClientSession, web
 
+
 class Email:
     def __init__(self, request):
         self.request = request

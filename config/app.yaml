@@ -14,3 +14,12 @@ DB_NAME: app
 DB_USER: user
 # services
 EMAIL_SERVICE_HOST: 127.0.0.1:5001
+# rabbitMQ
+RMQ_HOST: localhost
+RMQ_PORT: 5672
+RMQ_LOGIN: guest
+RMQ_PASSWORD: guest
+RMQ_CONSUME_QUEUE: email_response
+RMQ_PRODUCER_QUEUE: email
+RMQ_PRODUCER_ERROR: email_error
+RECONNECT_INTERVAL: 10
