@@ -10,7 +10,7 @@ from sqlalchemy import and_, select, exists, literal_column
 from app.models import get_model_by_name, row_to_dict
 from app.services.serializers import serialize_body
 from app.services.email import Email
-from app.services.auth import set_authorization_coockie, token_decode
+from app.services.auth import set_authorization_cookie_redis, token_decode, set_authorization_cookie
 
 
 auth_routes = web.RouteTableDef()
@@ -29,7 +29,7 @@ async def login(request: web.Request, body) -> web.Response:
                                    content_type='application/json')
 
     if body['password'] == user['password']:
-        return await set_authorization_coockie(user, {'hours': 24}, request.app['config']['SECRET_KEY'])
+        return await set_authorization_cookie_redis(user, {'hours': 24}, request.app['redis'])
 
     raise web.HTTPUnauthorized(
         body=json.dumps({'error': 'Invalid username / password combination'}), content_type='application/json')
@@ -39,7 +39,10 @@ async def login(request: web.Request, body) -> web.Response:
 @auth_routes.get('/api/v1/auth/logout')
 async def logout(request: web.Request) -> web.Response:
     response = web.json_response({'status': 'ok'})
-    response.del_cookie(name='AppCoockie')
+    token = request.cookies.get('AppCookie')
+    await request.app['redis'].delete(token)
+    response.del_cookie(name='AppCookie')
+
     return response
 
 
@@ -83,7 +86,7 @@ async def forgot_password(request: web.Request, body) -> web.Response:
     '''
 
     # await request.app.rmq.produce(data, request.app['config']['RMQ_PRODUCER_QUEUE'])
-    await request.app.redis.rpush('email', json.dumps(data))
+    await request.app['redis'].rpush('email', json.dumps(data))
 
     return web.Response(status=200, content_type='application/json', body=json.dumps({'status': 'ok'}))
 
@@ -94,14 +97,14 @@ async def restore_password_confirmation(request: web.Request) -> web.Response:
     token = request.match_info['token']
     user = token_decode(token, request.app['config']['SECRET_KEY'], 'restore_password_url')
 
-    return await set_authorization_coockie(user, {'minutes': 5}, request.app['config']['SECRET_KEY'], audience='restore_password_coockie')
+    return await set_authorization_cookie(user, {'minutes': 5}, request.app['config']['SECRET_KEY'], audience='restore_password_coockie')
 
 
 @swagger_path('swagger/password_new.yaml')
 @auth_routes.post('/api/v1/user/password/new')
 @serialize_body('reset_password')
 async def reset_password(request: web.Request, body) -> web.Response:
-    token = request.cookies.get('AppCoockie')
+    token = request.cookies.get('AppCookie')
 
     if not token:
         raise web.HTTPForbidden(body=json.dumps({'error': 'Access denied for requested resource'}),
@@ -120,6 +123,6 @@ async def reset_password(request: web.Request, body) -> web.Response:
         user_table.c.user_id == user['user_id']).values(**body).returning(literal_column('*')))
 
     if request.app['config']['AUTO_AUTHENTICATION']:
-        return await set_authorization_coockie(user, {'hours': 24}, request.app['config']['SECRET_KEY'])
+        return await set_authorization_cookie(user, {'hours': 24}, request.app['config']['SECRET_KEY'])
     
     return web.Response(body=json.dumps({'status': 'ok'}), content_type='application/json')
